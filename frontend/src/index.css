@@ -1,0 +1,912 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+
+/* ---- BEAST MODE GALAXY BACKGROUND (UPDATED) ---- */
+
+/* Theme variables */
+:root{
+  --star1: rgba(255,255,255,0.97);
+  --star2: rgba(255,255,255,0.72);
+  --nebula1: rgba(14,165,164,0.12);
+  --nebula2: rgba(99,102,241,0.12);
+  --nebula3: rgba(244,114,182,0.09);
+
+  --glass-1: rgba(255,255,255,0.02);
+  --glass-2: rgba(255,255,255,0.01);
+
+  --primary: 59,130,246; /* rgb for glow usage */
+}
+
+/* -------------------- Layout container -------------------- */
+/* the background sits behind everything; pointer-events none */
+.galaxy-root {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+  background: radial-gradient(
+    ellipse at 18% 10%,
+    rgba(20,20,30,0.6) 0%,
+    rgba(6,7,15,0.92) 40%,
+    #01020a 100%
+  );
+}
+
+/* -------------------- Stars (layers) -------------------- */
+/* small, dense stars */
+.galaxy-stars-small {
+  position: absolute;
+  inset: 0;
+  background-image:
+    radial-gradient(1px 1px at 20px 30px, var(--star2) 60%, transparent 62%),
+    radial-gradient(1.5px 1.5px at 80px 10px, var(--star1) 60%, transparent 62%);
+  background-size: 90px 90px, 140px 140px;
+  opacity: 0.65;
+  mix-blend-mode: screen;
+  animation: drift 240s linear infinite;
+  transform: translateZ(0);
+  will-change: transform;
+}
+
+/* larger, sparser stars with subtle twinkle */
+.galaxy-stars-large {
+  position: absolute;
+  inset: 0;
+  background-image:
+    radial-gradient(2px 2px at 40px 60px, rgba(255,255,255,0.95) 60%, transparent 62%),
+    radial-gradient(1.8px 1.8px at 130px 120px, rgba(220,220,255,0.82) 60%, transparent 62%);
+  background-size: 220px 220px, 360px 360px;
+  opacity: 0.36;
+  mix-blend-mode: screen;
+  animation: drift 360s linear infinite reverse;
+  filter: saturate(105%);
+}
+
+/* subtle twinkle pseudo-elements for depth */
+.galaxy-stars-small::after,
+.galaxy-stars-large::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(circle at 30% 40%, rgba(255,255,255,0.03), transparent 15%);
+  animation: twinkle 6s ease-in-out infinite;
+  opacity: 0.35;
+  mix-blend-mode: screen;
+  pointer-events: none;
+}
+
+/* -------------------- Nebula (soft colored clouds) -------------------- */
+.galaxy-nebula {
+  position: absolute;
+  inset: -30% -20% auto -20%;
+  height: 160%;
+  width: 160%;
+  filter: blur(70px) saturate(140%);
+  opacity: 0.55;
+  background-image:
+    radial-gradient(40% 30% at 18% 22%, var(--nebula1) 0%, transparent 36%),
+    radial-gradient(50% 40% at 62% 40%, var(--nebula2) 0%, transparent 40%),
+    radial-gradient(40% 35% at 82% 72%, var(--nebula3) 0%, transparent 44%);
+  animation: drift 260s linear infinite;
+  mix-blend-mode: screen;
+  transform-origin: center;
+  will-change: transform, opacity;
+}
+
+/* -------------------- Rotating ring / halo -------------------- */
+.galaxy-ring {
+  position: absolute;
+  left: 50%;
+  top: 52%;
+  width: 1300px;
+  height: 1300px;
+  transform: translate(-50%,-50%);
+  border-radius: 50%;
+  background: conic-gradient(
+    from 0deg,
+    rgba(59,130,246,0.12),
+    transparent 22%,
+    rgba(99,102,241,0.06),
+    transparent 60%,
+    rgba(99,102,241,0.08)
+  );
+  filter: blur(30px);
+  opacity: 0.46;
+  animation: spinSlow 160s linear infinite;
+  mix-blend-mode: screen;
+  pointer-events: none;
+}
+
+/* scale down ring on small screens for performance/visual fit */
+@media (max-width: 880px) {
+  .galaxy-ring { width: 900px; height: 900px; top: 56%; opacity:0.38; }
+}
+@media (max-width: 520px) {
+  .galaxy-ring { width: 600px; height: 600px; top: 60%; opacity:0.3; }
+}
+
+/* -------------------- Comets (occasional) -------------------- */
+/* We render a single comet element that moves across the scene.
+   To increase variety, you can clone the element with different delays. */
+.galaxy-comet {
+  position: absolute;
+  left: 110%;
+  top: 18%;
+  width: 8px;
+  height: 8px;
+  background: radial-gradient(circle at 30% 30%, #fff, rgba(255,255,255,0.9));
+  box-shadow: 0 0 20px 8px rgba(99,102,241,0.28), 0 0 6px 3px rgba(59,130,246,0.18);
+  transform: translate3d(0,0,0) rotate(-18deg);
+  animation: comet 6.6s linear infinite 2s;
+  opacity: 0;
+  pointer-events: none;
+  border-radius: 999px;
+}
+
+/* You can create additional comets by duplicating the element in DOM with different animation-delay */
+
+/* -------------------- Vignette & subtle scanline -------------------- */
+.galaxy-vignette {
+  position:absolute;
+  inset:0;
+  background:
+    radial-gradient(ellipse at 50% 18%, rgba(255,255,255,0.02), transparent 20%, rgba(0,0,0,0.56) 80%),
+    linear-gradient(180deg, rgba(0,0,0,0.02), rgba(0,0,0,0.06));
+  pointer-events:none;
+}
+
+/* -------------------- App stacking -------------------- */
+.app-content {
+  position: relative;
+  z-index: 20; /* above the animated background */
+}
+
+/* -------------------- Glass / Card helpers -------------------- */
+.beast-card {
+  background: linear-gradient(180deg, var(--glass-1), var(--glass-2));
+  border: 1px solid rgba(236, 229, 229, 0.832);
+  box-shadow: 0 10px 40px rgba(2,6,23,0.6);
+  border-radius: 12px;
+  backdrop-filter: blur(8px) saturate(120%);
+  transition: transform .22s cubic-bezier(.2,.9,.25,1), box-shadow .22s ease, opacity .22s ease;
+  will-change: transform;
+  min-height: 300px;
+}
+
+/* glow accent helper (buttons, badges) */
+.glow-accent {
+  box-shadow: 0 8px 30px rgba(var(--primary),0.10), 0 2px 8px rgba(99,102,241,0.06);
+  border: 1px solid rgba(59,130,246,0.12);
+  background: linear-gradient(180deg, rgba(59,130,246,0.10), rgba(59,130,246,0.04));
+}
+
+/* centered login wrapper */
+.beast-login-wrap {
+  min-height: calc(100vh - 90px);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding: 40px 20px;
+}
+
+/* -------------------- Animations (keyframes) -------------------- */
+/* continuous drift used by star & nebula layers */
+@keyframes drift {
+  from { transform: translate3d(0,0,0); }
+  to   { transform: translate3d(-600px,-360px,0); }
+}
+
+/* slow rotational spin for ring */
+@keyframes spinSlow {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+/* comet flyby */
+@keyframes comet {
+  0%   { transform: translate3d(0,0,0) rotate(-18deg); opacity:0; }
+  6%   { opacity:1; }
+  50%  { transform: translate3d(-140vw, 60vh, 0) rotate(-18deg); opacity:1; }
+  92%  { opacity:0; }
+  100% { transform: translate3d(-160vw,70vh,0) rotate(-18deg); opacity:0; }
+}
+
+/* star twinkle */
+@keyframes twinkle {
+  0%   { opacity: 0.25; transform: scale(1); }
+  50%  { opacity: 0.95; transform: scale(1.05); }
+  100% { opacity: 0.25; transform: scale(1); }
+}
+
+/* small transform pulse for badges */
+@keyframes badgePulse {
+  0% { transform: scale(1); opacity:0.9; }
+  50% { transform: scale(1.06); opacity:1; }
+  100% { transform: scale(1); opacity:0.92; }
+}
+
+/* subtle content fade-in */
+@keyframes fadeInUp {
+  from { opacity:0; transform: translateY(8px); }
+  to { opacity:1; transform: translateY(0); }
+}
+
+/* -------------------- Utility classes (use in JSX) -------------------- */
+/* fade-in helper */
+.animate-fade-in-up {
+  animation: fadeInUp 560ms cubic-bezier(.2,.9,.25,1) both;
+}
+
+/* stagger helper for lists (use style variable --delay) */
+.animate-stagger {
+  opacity: 0;
+  transform: translateY(6px) scale(.997);
+  animation: fadeInUp 520ms cubic-bezier(.2,.9,.25,1) forwards;
+  animation-delay: var(--delay, 0ms);
+}
+
+/* micro tilt & elevate for cards */
+.beast-card:hover {
+  transform: translateY(-8px) rotateX(1.2deg) rotateZ(-0.2deg);
+  box-shadow: 0 18px 45px rgba(2,6,23,0.72);
+}
+
+/* nav link helpers */
+.nav-link {
+  color: #cbd5e1;
+  transition: color .18s ease, transform .12s ease;
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.nav-link::after {
+  content: "";
+  position: absolute;
+  left: 12%;
+  right: 12%;
+  bottom: -6px;
+  height: 2px;
+  background: linear-gradient(90deg, rgba(99,102,241,0.28), rgba(56,189,248,0.14));
+  border-radius: 2px;
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform .22s ease;
+  opacity: 0.95;
+}
+.nav-link:hover {
+  color: #fff;
+  transform: translateY(-2px);
+}
+.nav-link:hover::after {
+  transform: scaleX(1);
+}
+
+/* CTA button style in nav */
+.nav-cta {
+  background: linear-gradient(90deg,#2563eb,#60a5fa);
+  box-shadow: 0 6px 18px rgba(37,99,235,0.18);
+  font-weight: 700;
+  transition: transform .12s ease, box-shadow .12s ease;
+}
+.nav-cta:hover { transform: translateY(-3px); box-shadow: 0 12px 30px rgba(37,99,235,0.24); }
+
+/* pulse badge */
+.pulse-badge {
+  display:inline-block;
+  padding:4px 10px;
+  border-radius:999px;
+  background: linear-gradient(90deg, rgba(99,102,241,0.14), rgba(59,130,246,0.08));
+  color: #dbeafe;
+  font-weight:700;
+  box-shadow: 0 8px 24px rgba(59,130,246,0.06);
+  animation: badgePulse 2.8s ease-in-out infinite;
+}
+
+/* subtle floating helper */
+.float-slow { animation: float 6s ease-in-out infinite; }
+@keyframes float {
+  0% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+  100% { transform: translateY(0); }
+}
+
+/* parallax helper (applied to elements toggled by JS) */
+.parallax { transition: transform .12s ease; transform: translateZ(0); }
+
+/* ensure app content above stars */
+.app-content { z-index: 20; position: relative; }
+
+/* -------------------- Accessibility / Reduced motion -------------------- */
+@media (prefers-reduced-motion: reduce) {
+  .galaxy-stars-small,
+  .galaxy-stars-large,
+  .galaxy-nebula,
+  .galaxy-ring,
+  .galaxy-comet {
+    animation: none !important;
+  }
+  .animate-fade-in-up,
+  .animate-stagger,
+  .beast-card:hover,
+  .nav-link:hover {
+    transition: none !important;
+    animation: none !important;
+    transform: none !important;
+  }
+}
+
+/* -------------------- Performance tips (low-power device) -------------------- */
+/* If you want an easy low-power mode class: add 'low-power' on body to reduce motion & opacity */
+body.low-power .galaxy-stars-small,
+body.low-power .galaxy-stars-large,
+body.low-power .galaxy-nebula,
+body.low-power .galaxy-ring,
+body.low-power .galaxy-comet {
+  animation: none !important;
+  opacity: 0.25 !important;
+  filter: blur(40px) !important;
+}
+
+/* -------------------- Small screen layout tweaks -------------------- */
+@media (max-width: 640px) {
+  .beast-card { padding: 12px; border-radius: 10px; }
+  .beast-login-wrap { padding: 28px 14px; }
+  .nav-link { font-size: 13px; padding: 6px 8px; }
+}
+/* ===== ADD-ON: action burst animation ===== */
+.burst-wrap { position: absolute; inset:0; display:flex; align-items:center; justify-content:center; pointer-events:none; }
+.burst {
+  position:absolute;
+  width:10px;height:10px;border-radius:999px;
+  box-shadow:
+    0 -4px 12px rgba(99,102,241,0.9),
+    6px -6px 14px rgba(59,130,246,0.8),
+    -6px 6px 12px rgba(99,102,241,0.7);
+  transform: scale(0.2);
+  animation: burstExpand 420ms ease-out forwards;
+}
+@keyframes burstExpand {
+  0% { transform: scale(0.2); opacity: 0.95; filter: blur(4px); }
+  60% { transform: scale(7); opacity: 0.8; filter: blur(18px); }
+  100% { transform: scale(12); opacity: 0; filter: blur(28px); }
+}
+
+/* ===== micro hover glows & 3D tilt for cards ===== */
+.beast-card { transform-style: preserve-3d; }
+.beast-card:hover { transition: transform .22s, box-shadow .22s; transform: perspective(900px) translateY(-8px) rotateX(1deg) rotateY(-0.25deg); }
+
+/* ===== small shimmer line used for product progress bars ===== */
+.progress-shimmer { background: linear-gradient(90deg, rgba(255,255,255,0.06), rgba(255,255,255,0.12), rgba(255,255,255,0.06)); height:100%; }
+
+/* ===== subtle nav icon scale on hover (if you add icons) ===== */
+.nav-link svg { transition: transform .16s ease; }
+.nav-link:hover svg { transform: translateY(-2px) scale(1.06); }
+
+/* ===== utilities for quick layout polish ===== */
+.small-muted { font-size: 12px; color: #9aa7bf; }
+
+/* Login-specific small tweaks */
+.beast-card { background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); border-radius: 12px; }
+
+/* ensure header text is light */
+header .text-lg { color: #edf2f7; }
+
+/* spacing for top nav on small screens */
+@media (max-width: 640px) {
+  nav button { padding: 6px 8px; font-size: 13px; }
+}
+
+/* lighten general body text to read well on dark background */
+body, .app-content { 
+  color: #e6eef8;
+ }
+
+
+
+/* Ensure the card and inputs read on dark bg */
+.beast-card { background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); border: 1px solid rgba(255,255,255,0.06); }
+
+/* ===== Login card presentation polish ===== */
+/* narrow, taller card look */
+.beast-card {
+   padding: 50px; 
+   border-radius: 12px;
+
+   }
+/* Add vertical spacing between form blocks in Login page */
+.login-form > div {
+  margin-bottom: 15px; 
+}
+
+
+
+/* rounded logo circle */
+.beast-card > .text-center > .w-16 { border-radius: 999px; }
+
+/* lighten placeholders and input text for dark bg */
+input::placeholder { color: rgba(203,213,225,0.42); }
+input { color: #e6eef8; }
+
+/* ensure the links row spacing is correct */
+.beast-card .flex.items-center.justify-between { margin-top: 20px; }
+
+/* small responsive tweak */
+@media (max-width: 420px) {
+  .beast-card { padding: 20px; }
+}
+
+/* FORCE show/hide button to stay at right edge of password field */
+.password-wrapper {
+  position: relative !important;
+}
+
+.password-wrapper button {
+  position: absolute !important;
+  top: 50% !important;
+  right: -0.35rem !important;   /* adjust horizontally if needed */
+  transform: translateY(-50%) !important;
+  z-index: 10 !important;
+  padding: 2px 6px !important;
+}
+/* Brand text underline animation (matches screenshot) */
+.brand-underline {
+  position: relative;
+  display: inline-block;
+
+}
+
+.brand-underline::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: -4px;
+  width: 100%;
+  height: 2px;
+  border-radius: 4px;
+  transform: scaleX(0.3);
+  opacity: 0.8;
+  transition: transform 0.25s ease;
+}
+
+.brand-underline:hover::after {
+  transform: scaleX(1);
+}
+
+/* Right-side nav items */
+.nav-item {
+  color: #cbd5e1;
+  transition: color .2s ease, transform .2s ease;
+}
+
+.nav-item:hover {
+  color: white;
+  transform: translateY(-1px);
+}
+
+/* FORCE spacing between navbar items */
+nav .nav-item {
+  margin-left: 20px;
+}
+nav .nav-item:first-child {
+  margin-left: 0;
+}
+.brand-white {
+  position: relative;
+  color: white;
+}
+
+/* ================================
+   SIGNUP BOX SIZE CONTROLS
+   ================================ */
+
+/* Wrap for signup card */
+.signup-card {
+  max-width: 230px;      /* width of the create account box */
+  min-height: 320px ;     /* height of the box */
+  padding: 30px 52px ;    /* internal spacing (top/bottom, left/right) */
+  border-radius: 19px ;
+  display: flex;
+  flex-direction: column;   /* rounded corners */
+  background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01));
+  border: 2px solid rgba(255,255,255,0.06);
+  box-shadow: 0 10px 40px rgba(2,6,23,0.6);
+  backdrop-filter: blur(8px) saturate(120%);
+  transition: transform .22s ease, box-shadow .22s ease;
+}
+
+/* Optional hover effect */
+.signup-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 18px 42px rgba(2,6,23,0.65);
+}
+
+/* Adjust spacing inside form labels + inputs */
+.signup-card input {
+  height: 16px ;   /* taller input fields */
+  padding: 1px 2px ;
+  font-size: 12px ;
+}
+
+/* Adjust spacing between blocks */
+.signup-card .form-block {
+  margin-bottom: 22px ;
+}
+/* Add spacing between each form block */
+
+
+/* Password toggle alignment safety */
+.signup-card .password-wrapper button {
+  right: -0.85rem !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+}
+
+/* Mobile tweaks */
+@media (max-width: 480px) {
+  .signup-card {
+    max-width: 90% !important;
+    padding: 28px 20px !important;
+    min-height: 500px !important;
+  }
+}
+/* wrapper around the password input */
+/* Password wrapper ensures correct relative container */
+.password-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+/* Add room for the show button */
+.password-input {
+  padding-right: 10px !important;
+}
+
+/* Final, fixed position for the Show/Hide button */
+.password-toggle {
+  position: absolute !important;
+  right: 12px !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  padding: 4px 8px !important;
+  cursor: pointer;
+  user-select: none;
+  z-index: 5;
+}
+/* FORCE spacing between signup blocks */
+.signup-block {
+  margin-bottom: 12px !important;   /* change this for bigger/smaller gaps */
+}
+/* === Page fade-in + slide-up animation (global) === */
+
+/* Smooth fade + slight slide up */
+@keyframes fadeInUp {
+  0% { opacity: 0; transform: translateY(10px); }
+  60% { opacity: 1; transform: translateY(-2px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+/* Use this on the outer card to animate in */
+.animate-fade-in-up {
+  animation: fadeInUp 8200ms cubic-bezier(.2,.9,.25,1) both;
+}
+
+/* Slightly slower / more pronounced version if you prefer */
+.animate-fade-in-up-slow {
+  animation: fadeInUp 760ms cubic-bezier(.2,.9,.25,1) both;
+}
+
+/* Stagger helpers — apply .stagger-child on parent and --stagger-delay on children */
+.stagger-parent { --stagger-duration: 380ms; }
+.stagger-child {
+  opacity: 0;
+  transform: translateY(10px);
+  animation: fadeInUp var(--stagger-duration) cubic-bezier(.2,.9,.25,1) forwards;
+  animation-delay: var(--delay, 3ms);
+}
+
+/* Small utility to quickly set delays inline in markup: style={{ '--delay': '120ms' }} */
+/* Hover upward effect */
+.signup-card,
+.beast-card {
+  transition: transform .35s cubic-bezier(.22,1,.36,1), box-shadow .35s ease;
+}
+
+.signup-card:hover,
+.beast-card:hover {
+  transform: translateY(-100px);      /* moves the box UP */
+  box-shadow: 5px 15px 40px rgba(0,1000,500,0.45);
+}
+/* Dashboard small styles & animations */
+.beast-card { background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); border-radius: 10px; border: 1px solid rgba(255,255,255,0.04); }
+.signup-card { background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); border-radius: 12px; border: 1px solid rgba(255,255,255,0.06); }
+
+/* Donut stroke animation */
+svg circle {
+  transform-origin: 50% 50%;
+}
+
+/* Heatmap hover */
+.beast-card .w-4:hover { transform: scale(1.08); transition: transform .14s ease; }
+
+/* responsive tweaks */
+@media (max-width: 1024px) {
+  .grid-cols-12 { grid-template-columns: repeat(12, minmax(0, 1fr)); }
+  aside.col-span-3 { grid-column: span 12; }
+  section.col-span-6 { grid-column: span 12; }
+  aside.col-span-3:last-child { grid-column: span 12; }
+}
+/* ---------- Dashboard / Products / Suppliers styles ---------- */
+/* Ensure no page-level animation classes interfere */
+.animate-fade-in-up, .signup-card, .beast-card { animation: none !important; }
+
+/* Card look */
+.beast-card { background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); border-radius: 12px; border: 1px solid rgba(255,255,255,0.06); }
+
+/* Form spacing (explicit) */
+.beast-card form .mb-4 { margin-bottom: 1rem; }
+
+/* Password toggle / placement (if reused) */
+.password-wrapper { position: relative; }
+.password-toggle { position: absolute !important; right: 10px; top: 50%; transform: translateY(-50%); z-index: 10; }
+
+/* Pie stroke transition is handled inline via style; this is fallback */
+svg circle { transition: stroke-dashoffset 900ms cubic-bezier(.2,.9,.25,1); }
+
+/* Ensure grid for product/supplier cards */
+.grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+/* Reduce hover motion */
+.beast-card:hover { transform: none !important; box-shadow: 0 10px 30px rgba(2,6,23,0.6); }
+/* product/supplier card intro animation */
+@keyframes createCard {
+  0% { transform: scale(0.86) translateY(8px); opacity: 0; filter: blur(6px); }
+  60% { transform: scale(1.02) translateY(-4px); opacity: 1; filter: blur(0); }
+  100% { transform: scale(1) translateY(0); opacity: 1; filter: blur(0); }
+}
+
+.animate-create-card {
+  animation: createCard 850ms cubic-bezier(.2,.9,.25,1) both;
+}
+
+/* card visual tweak to match rest of theme */
+.product-card, .supplier-card {
+  transition: transform .18s ease, box-shadow .18s ease;
+}
+.product-card:hover, .supplier-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 16px 36px rgba(2,6,23,0.6);
+}
+
+/* ensure the cards area only shows when there are items (we already conditionally render in React)
+   For safety: hide empty container if present */
+.beast-card .empty-placeholder { display: none; }
+
+/* ensure the Add form matches the login size & feel */
+.form-card {
+  max-width: 420px; /* same as login narrow card */
+  width: 100%;
+  min-height: 360px; /* make it visually similar in height to login */
+  display: block;
+}
+
+/* product/supplier card intro animation */
+@keyframes createCard {
+  0% { transform: scale(0.86) translateY(8px); opacity: 0; filter: blur(6px); }
+  60% { transform: scale(1.02) translateY(-4px); opacity: 1; filter: blur(0); }
+  100% { transform: scale(1) translateY(0); opacity: 1; filter: blur(0); }
+}
+
+.animate-create-card {
+  animation: createCard 850ms cubic-bezier(.2,.9,.25,1) both;
+}
+
+/* subtle hover elevation for cards */
+.product-card, .supplier-card {
+  transition: transform .18s ease, box-shadow .18s ease;
+}
+.product-card:hover, .supplier-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 16px 36px rgba(2,6,23,0.6);
+}
+
+/* Ensure password toggle stays at right edge (re-affirm) */
+.password-wrapper { position: relative; }
+.password-toggle { position: absolute !important; right: 10px; top: 50%; transform: translateY(-50%); z-index: 10; }
+
+/* Hide empty placeholders by default */
+.beast-card .empty-placeholder { display: none; }
+/* ---------- Two-column centered layout where both columns have fixed equal width ---------- */
+/* page-grid centers the two columns; on mobile it stacks */
+.page-grid {
+  display: grid;
+  grid-template-columns: 1fr; /* stack by default */
+  gap: 1.5rem;
+  justify-content: center;
+}
+
+/* On medium and larger screens use two equal fixed columns (match login width) */
+@media (min-width: 768px) {
+  .page-grid {
+    grid-template-columns: minmax(0, 420px) minmax(0, 420px);
+    gap: 2rem; /* gap between form and cards */
+    align-items: start;
+  }
+}
+
+/* left column wrapper (keeps form centered inside column) */
+.form-column {
+  display: flex;
+  justify-content: center;
+}
+
+/* right column wrapper */
+.cards-column {
+  display: flex;
+  justify-content: center;
+}
+
+/* ensure the inner cards stack vertically and fill the column width */
+.cards-column .beast-card,
+.form-column .form-card {
+  width: 100%;
+  max-width: 420px;
+}
+
+/* keep the same min-height as login card for visual parity */
+.form-card { min-height: 360px; }
+
+/* create-card animation (same as before) */
+@keyframes createCard {
+  0% { transform: scale(0.86) translateY(8px); opacity: 0; filter: blur(6px); }
+  60% { transform: scale(1.02) translateY(-4px); opacity: 1; filter: blur(0); }
+  100% { transform: scale(1) translateY(0); opacity: 1; filter: blur(0); }
+}
+.animate-create-card { animation: createCard 850ms cubic-bezier(.2,.9,.25,1) both; }
+
+/* subtle hover elevation */
+.product-card, .supplier-card { transition: transform .1800s ease, box-shadow .180s ease; }
+.product-card:hover, .supplier-card:hover { transform: translateY(-4px); box-shadow: 0 30px 50px rgba(2,6,23,0.6); }
+
+/* password toggle edge re-affirmation */
+.password-wrapper { position: relative; }
+.password-toggle { position: absolute !important; right: 10px; top: 50%; transform: translateY(-50%); z-index: 10; }
+/* Dashboard charts styling */
+
+/* donut container centers and positions the center label */
+.donut-wrap { position: relative; display: inline-block; }
+.donut-svg { display: block; }
+.donut-center {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  pointer-events: none;
+  color: #e6eef8;
+}
+
+/* give the sections subtle entrance */
+.beast-card { transition: transform .14s ease, box-shadow .14s ease; }
+
+/* animate bars (height transition provided by SVG rect transition) */
+.bar-anim { transition: height 700ms cubic-bezier(.2,.9,.25,1), y 700ms cubic-bezier(.2,.9,.25,1); }
+
+/* simple responsive tweaks */
+@media (max-width: 768px) {
+  .donut-wrap { margin: 8px 0; }
+  .simple-bar-wrap { margin: 8px 0; }
+}
+
+/* small-muted helper already used */
+.small-muted { color: #9aa7bf; }
+/* Dashboard charts styling */
+
+/* donut container centers and positions the center label */
+.donut-wrap { position: relative; display: inline-block; }
+.donut-svg { display: block; }
+.donut-center {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  pointer-events: none;
+  color: #e6eef8;
+}
+
+/* animate bars (height transition provided by SVG rect transition) */
+.bar-anim { transition: height 700ms cubic-bezier(.2,.9,.25,1), y 700ms cubic-bezier(.2,.9,.25,1); }
+
+/* basic responsive tweaks */
+@media (max-width: 768px) {
+  .donut-wrap { margin: 8px 0; }
+  .simple-bar-wrap { margin: 8px 0; }
+}
+
+/* small-muted helper */
+.small-muted { color: #9aa7bf; }
+
+/* subtle card transition */
+.beast-card { transition: transform .14s ease, box-shadow .14s ease; }
+/* Dashboard charts styling */
+
+/* ensure chart cards are centered and don't stretch weirdly */
+.chart-card { display: flex; align-items: center; justify-content: center; }
+
+/* donut center label */
+.donut-wrap { position: relative; display: inline-block; }
+.donut-svg { display: block; }
+.donut-center {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  pointer-events: none;
+  color: #e6eef8;
+}
+
+/* animate bars (SVG rect heights) */
+.bar-anim { transition: height 700ms cubic-bezier(.2,.9,.25,1), y 700ms cubic-bezier(.2,.9,.25,1); }
+
+/* responsive tweaks */
+@media (max-width: 768px) {
+  .donut-wrap { margin: 8px 0; }
+  .simple-bar-wrap { margin: 8px 0; }
+}
+
+/* small-muted helper */
+.small-muted { color: #9aa7bf; }
+
+/* subtle beast-card transition */
+.beast-card { transition: transform .14s ease, box-shadow .14s ease; }
+/* Force two-column layout for top and bottom rows */
+.dashboard-root .top-grid,
+.dashboard-root .bottom-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr; /* always two equal columns */
+  gap: 1.25rem;
+  align-items: start;
+}
+
+/* top row inner layout */
+.top-content {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: nowrap;
+}
+
+/* legend column spacing */
+.legend-col { min-width: 120px; }
+
+/* legend color samples */
+.legend-sample { width: 12px; height: 12px; display:inline-block; border-radius:4px; }
+.legend-sample.low { background: #f59e0b; }
+.legend-sample.medium { background: #60a5fa; }
+.legend-sample.high { background: #fb7185; }
+
+/* donut center label */
+.donut-wrap { position: relative; display: inline-block; }
+.donut-svg { display: block; }
+.donut-center { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); text-align: center; pointer-events: none; color: #e6eef8; }
+
+/* bar rect animation */
+.bar-anim { transition: height 700ms cubic-bezier(.2,.9,.25,1), y 700ms cubic-bezier(.2,.9,.25,1); }
+
+/* chart card consistent look */
+.chart-card { display:flex; align-items:center; justify-content:center; }
+
+/* responsive fallback for very small screens: stack into 1 column */
+@media (max-width: 520px) {
+  .dashboard-root .top-grid,
+  .dashboard-root .bottom-grid {
+    grid-template-columns: 1fr;
+  }
+  .top-content { flex-direction: column; gap: 0.6rem; }
+  .legend-col { min-width: auto; }
+}
