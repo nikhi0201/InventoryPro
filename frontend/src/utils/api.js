@@ -4,7 +4,7 @@ import axios from "axios";
 const TOKEN_KEY = "inventorypro_token"; // must match your auth helper
 
 // Base URL for backend (override with frontend/.env -> VITE_API_BASE)
-const BASE_URL = import.meta.env.VITE_API_BASE || "http://localhost:5000";
+const BASE_URL = import.meta.env.VITE_API_BASE || "https://inventorypro-backend-7ejt.onrender.com";
 
 const API = axios.create({
   baseURL: BASE_URL,
